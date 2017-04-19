@@ -2,59 +2,26 @@ import React, {Component} from 'react';
 import ReactDom from 'react-dom';
 import Profile from './github/Profile.jsx'
 import Search from './github/Search.jsx'
+import GitHubStore from '../stores/github-store';
+import GithubAction from '../actions/github-action';
+
 class App extends Component {
     constructor(props) {
         super(props);
-        this.state = {
-            userName: '1312415',
-            userData: [],
-            userRepos: [],
-            perPage: 5
-        }
+        this.state = GitHubStore.getUser();
+        console.log(this.state);
     }
-
-    getUserData() {
-        $.ajax({
-            url: 'https://api.github.com/users/' + this.state.userName + '?client_id=' + this.defaultProps.clientId + '&client_secret=' + this.defaultProps.clientSecret,
-            dataType: "json",
-            cache: false,
-            success: function (data) {
-                this.setState({userData: data});
-                console.log(data);
-            }.bind(this),
-            error: function (xhr, status, err) {
-                this.setState({username: null});
-                alert(err);
-            }.bind(this)
-        });
+    ChangeUser(){
+        this.setState(GitHubStore.getUser())
     }
-
-    getUserRepos() {
-        console.log('https://api.github.com/users/' + this.state.userName + '/repos?per_pages=' + this.state.perPage + '&client_id=' + this.defaultProps.clientId + '&client_secret=' + this.defaultProps.clientSecret + '&sort=created');
-        $.ajax({
-            url: 'https://api.github.com/users/' + this.state.userName + '/repos?per_pages=' + this.state.perPage + '&client_id=' + this.defaultProps.clientId + '&client_secret=' + this.defaultProps.clientSecret + '&sort=created',
-            dataType: "json",
-            cache: false,
-            success: function (data) {
-                this.setState({userRepos: data});
-                console.log(data);
-            }.bind(this),
-            error: function (xhr, status, err) {
-                this.setState({username: null});
-                alert(err);
-            }.bind(this)
-        });
-    }
-
     componentDidMount() {
-        this.getUserData();
-        this.getUserRepos();
+        GitHubStore.on('change',this.ChangeUser.bind(this));
+    }
+    componentWillUnmount(){
+        GitHubStore.removeListener("change",this.ChangeUser.bind(this))
     }
     onFormSubmit(username){
-        this.setState({userName: username}, function () {
-            this.getUserData();
-            this.getUserRepos();
-        });
+        GithubAction.changeUser(username);
     }
     render() {
         return (
@@ -66,9 +33,6 @@ class App extends Component {
     }
 }
 
-App.prototype.defaultProps = {
-    clientId: '0062ed2eb433c06cbf1c',
-    clientSecret: '06b64266d8f7a23c9e5f8de9f1255d150d855890'
-};
+
 
 export default  App;
